@@ -235,9 +235,9 @@
             debugLog({
                 draft
             });
-            // await draft.selectMadeForKids();
+            await draft.selectMadeForKids();
             const visibility = await draft.goToVisibility();
-            // await visibility.setVisibility();
+            await visibility.setVisibility();
             const dialog = await visibility.save();
             await dialog.close();
             await sleep(100);
