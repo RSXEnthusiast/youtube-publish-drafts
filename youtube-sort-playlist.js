@@ -14,7 +14,7 @@
     // -----------------------------------------------------------------
     // ~ SORT PLAYLIST CONFIG
     // -----------------------------------------------------------------
-    const SORTING_KEY = (one, other) => {
+    const SORTING_KEY = (other, one) => {
         return one.name.localeCompare(other.name, undefined, {numeric: true, sensitivity: 'base'});
     };
     // END OF CONFIG (not safe to edit stuff below)
