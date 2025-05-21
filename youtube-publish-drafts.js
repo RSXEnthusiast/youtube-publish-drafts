@@ -6,6 +6,7 @@
     // -----------------------------------------------------------------
     const MODE = 'publish_drafts'; // 'publish_drafts' / 'sort_playlist';
     const DEBUG_MODE = true; // true / false, enable for more context
+    const LOOP_PAGES = true; // true / false       (enable to loop through all pages)
     // -----------------------------------------------------------------
     // ~ PUBLISH CONFIG
     // -----------------------------------------------------------------
@@ -244,6 +245,32 @@
         }
     }
 
+    async function getNextPageSelector() {
+        return await findElement(NEXT_PAGE_BUTTON_SELECTOR);
+    }
+
+    async function getPageDescription() {
+        return (await findElement(PAGE_DESCRIPTION)).innerText;
+    }
+
+    async function publishAllDrafts() {
+        ; debugLog('looping all pages...');
+        await publishDrafts();
+        let nextPageSelector = await getNextPageSelector();
+        while (!nextPageSelector.disabled) {
+            ; debugLog('navigating to next page...');
+            let pageDescription = await getPageDescription();
+            click(nextPageSelector);
+            if (await isNextPage(pageDescription)) {
+                await publishDrafts();
+                nextPageSelector = await getNextPageSelector();
+            }
+            else { return debugLog('could not continue on next page'); }
+            ; debugLog('continuing in next page...');
+        }
+        ; debugLog('completed loop through all pages');
+    }
+
     // ----------------------------------
     // SORTING STUFF
     // ----------------------------------
@@ -325,10 +352,9 @@
     // ENTRY POINT
     // ----------------------------------
     ({
-        'publish_drafts': publishDrafts,
+        'publish_drafts': LOOP_PAGES ? publishAllDrafts : publishDrafts,
         'sort_playlist': sortPlaylist,
     })[MODE]();
 
 
 })();
-
