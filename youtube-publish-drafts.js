@@ -348,7 +348,7 @@
             await visibility.setVisibility();
             const dialog = await visibility.save();
             await dialog.close();
-            await sleep(100);
+            await sleep(200);
         }
     }
 
