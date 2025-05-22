@@ -138,7 +138,7 @@
         async close() {
             click(await this.closeDialogButton());
             await waitForElementToDisappear('h1#dialog-title');
-            await sleep(500)
+            await sleep(1000)
             debugLog('closed');
         }
     }
