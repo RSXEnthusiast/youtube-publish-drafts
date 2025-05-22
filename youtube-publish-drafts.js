@@ -125,6 +125,9 @@
     const PLAYLIST_CREATE_BUTTON = '#create-button button';
     // ADD TO PLAYLIST STUFF
     const FIRST_PLAYLIST_CHECKBOX = 'ytcp-checkbox-group ytcp-checkbox-lit';
+    // Pagenation stuff
+    const NEXT_PAGE_BUTTON_SELECTOR = 'ytcp-icon-button#navigate-after';
+    const PAGE_DESCRIPTION = 'span.page-description';
 
     class SuccessDialog {
         constructor(raw) {
@@ -359,13 +362,28 @@
     }
 
     async function getNextPageSelector() {
-        return await findElement(NEXT_PAGE_BUTTON_SELECTOR);
+        return await waitForElement(NEXT_PAGE_BUTTON_SELECTOR);
     }
 
     async function getPageDescription() {
-        return (await findElement(PAGE_DESCRIPTION)).innerText;
+        return (await waitForElement(PAGE_DESCRIPTION)).innerText;
     }
 
+    async function waitForNextPage(pageDescription) {
+      let timeout = 20000;
+      while (timeout > 0) {
+        const newPageDescription = document.querySelector(PAGE_DESCRIPTION);
+        if (pageDescription != newPageDescription) { // not found or hidden
+            await sleep(10000)
+            return true;
+        }
+        await new Promise(resolve => setTimeout(resolve, TIMEOUT_STEP_MS));
+        timeout -= TIMEOUT_STEP_MS;
+      }
+      console.warn(`Timeout waiting for element next page to load`);
+      return false;
+    }
+    
     async function publishAllDrafts() {
         ; debugLog('looping all pages...');
         await publishDrafts();
@@ -374,7 +392,7 @@
             ; debugLog('navigating to next page...');
             let pageDescription = await getPageDescription();
             click(nextPageSelector);
-            if (await isNextPage(pageDescription)) {
+            if (await waitForNextPage(pageDescription)) {
                 await publishDrafts();
                 nextPageSelector = await getNextPageSelector();
             }
