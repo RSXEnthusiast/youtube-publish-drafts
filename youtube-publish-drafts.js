@@ -1,23 +1,15 @@
 (() => {
     // -----------------------------------------------------------------
     // CONFIG (you're safe to edit this)
-    // -----------------------------------------------------------------
-    // ~ GLOBAL CONFIG
-    // -----------------------------------------------------------------
-    const MODE = 'publish_drafts'; // 'publish_drafts' / 'sort_playlist';
     const DEBUG_MODE = true; // true / false, enable for more context
-    const LOOP_PAGES = true; // true / false       (enable to loop through all pages)
-    // -----------------------------------------------------------------
-    // ~ PUBLISH CONFIG
-    // -----------------------------------------------------------------
+    const LOOP_PAGES = true; // true / false, enable to loop through all pages when publishing drafts
     const MADE_FOR_KIDS = false; // true / false;
     const VISIBILITY = 'Unlisted'; // 'Public' / 'Private' / 'Unlisted'
-    // -----------------------------------------------------------------
-    // ~ SORT PLAYLIST CONFIG
-    // -----------------------------------------------------------------
-    const SORTING_KEY = (one, other) => {
-        return one.name.localeCompare(other.name, undefined, {numeric: true, sensitivity: 'base'});
-    };
+    // Playlist Config
+    const ADD_TO_PLAYLIST = true; // true / false, Enables/Disables the playlist feature completely
+    const PLAYLIST_NAME = 'New Playlist'; // Name of Playlist to be created and all videos will be added. Adding videos to existing playlist is not supported. 
+    const NEW_PLAYLIST_VISIBILITY = 'Unlisted'; // 'Public' / 'Private' / 'Unlisted'
+    const NEW_PLAYLIST_SORT = 'Manually sorted in YouTube'; // 'Date published (newest)' / 'Date published (oldest)' / 'Most popular' / 'Date added (newest)' / 'Date added (oldest)' / 'Manually sorted in YouTube'
     // END OF CONFIG (not safe to edit stuff below)
     // -----------------------------------------------------------------
 
@@ -38,11 +30,6 @@
     //              `. --'-- .'
     //                `-...-'
 
-
-
-    // ----------------------------------
-    // COMMON  STUFF
-    // ---------------------------------
     const TIMEOUT_STEP_MS = 20;
     const DEFAULT_ELEMENT_TIMEOUT_MS = 10000;
     function debugLog(...args) {
@@ -73,6 +60,21 @@
         return null;
     }
 
+    async function waitForElementToDisappear(selector, baseEl = document, timeoutMs = 10000) {
+      let timeout = timeoutMs;
+      while (timeout > 0) {
+        const el = baseEl.querySelector(selector);
+        if (!el || el.offsetParent === null) { // not found or hidden
+          return true;
+        }
+        await new Promise(resolve => setTimeout(resolve, TIMEOUT_STEP_MS));
+        timeout -= TIMEOUT_STEP_MS;
+      }
+      console.warn(`Timeout waiting for element ${selector} to disappear`);
+      return false;
+    }
+
+
     function click(element) {
         const event = document.createEvent('MouseEvents');
         event.initMouseEvent('mousedown', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
@@ -81,13 +83,19 @@
         debugLog(element, 'clicked');
     }
 
-    // ----------------------------------
-    // PUBLISH STUFF
-    // ----------------------------------
     const VISIBILITY_PUBLISH_ORDER = {
         'Private': 0,
         'Unlisted': 1,
         'Public': 2,
+    };
+    
+    const PLAYLIST_SORT_ORDER = {
+        'Date published (newest)': 0,
+        'Date published (oldest)': 1,
+        'Most popular': 2,
+        'Date added (newest)': 3,
+        'Date added (oldest)': 4,
+        'Manually sorted in YouTube': 5,
     };
 
     // SELECTORS
@@ -103,6 +111,18 @@
     const SUCCESS_ELEMENT_SELECTOR = 'ytcp-video-thumbnail-with-info';
     const DIALOG_SELECTOR = 'ytcp-dialog.ytcp-video-share-dialog > tp-yt-paper-dialog:nth-child(1)';
     const DIALOG_CLOSE_BUTTON_SELECTOR = 'tp-yt-iron-icon';
+    // GENERAL PLAYLIST STUFF
+    const PLAYLIST_DROPDOWN_SELECTOR = 'ytcp-video-metadata-playlists ytcp-text-dropdown-trigger';
+    const PLAYLIST_DONE_BUTTON = 'ytcp-button.done-button button';
+    // NEW PLAYLIST STUFF
+    const NEW_PLAYLIST_DROPDOWN = 'ytcp-button.new-playlist-button.action-button';
+    const NEW_PLAYLIST_BUTTON = 'tp-yt-paper-item[test-id="new_playlist"]';
+    const TITLE_FIELD = '#title-textarea #textbox';
+    const VISIBILITY_DROPDOWN = 'ytcp-playlist-metadata-visibility ytcp-dropdown-trigger';
+    const SORT_DROPDOWN = 'ytcp-playlist-metadata-sorting ytcp-dropdown-trigger';
+    const PLAYLIST_CREATE_BUTTON = '#create-button button';
+    // ADD TO PLAYLIST STUFF
+    const FIRST_PLAYLIST_CHECKBOX = 'ytcp-checkbox-group ytcp-checkbox-lit';
 
     class SuccessDialog {
         constructor(raw) {
@@ -173,11 +193,93 @@
             const nthChild = MADE_FOR_KIDS ? 1 : 2;
             return await waitForElement(`${RADIO_BUTTON_SELECTOR}:nth-child(${nthChild})`, this.raw);
         }
-
+        
         async selectMadeForKids() {
             click(await this.madeForKidsPaperButton());
             await sleep(50);
             debugLog(`"Made for kids" set as ${MADE_FOR_KIDS}`);
+        }
+        
+        async setTitle() {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        
+            // Get all matching title boxes
+            const titleBoxes = document.querySelectorAll('#title-textarea #textbox');
+        
+            if (titleBoxes.length > 1) {
+                const titleBox = titleBoxes[1];  // second element (0-based index)
+                titleBox.focus();
+                titleBox.innerText = PLAYLIST_NAME;
+                titleBox.dispatchEvent(new InputEvent('input', { bubbles: true }));
+                console.log(`Set playlist title to "${PLAYLIST_NAME}"`);
+            } else {
+                console.warn('Not enough title boxes found.');
+            }
+        }
+
+        async setVisibility() {
+          const dropdown = document.querySelector(VISIBILITY_DROPDOWN);
+          if (!dropdown) {
+            console.warn('Visibility dropdown not found');
+            return;
+          }
+          dropdown.click();
+        
+          // Wait for 500ms before continuing so dropdown options appear
+          await new Promise(resolve => setTimeout(resolve, 500));
+        
+          const options = Array.from(document.querySelectorAll('tp-yt-paper-item:not([hidden])'));
+          const match = options.find(opt => opt.innerText.trim() === NEW_PLAYLIST_VISIBILITY);
+          if (match) {
+            match.click();
+            console.log(`Set visibility to ${NEW_PLAYLIST_VISIBILITY}`);
+          } else {
+            console.warn(`Option "${NEW_PLAYLIST_VISIBILITY}" not found in visibility dropdown.`);
+          }
+        }
+        
+        async setPlaylistSorting() {
+          const dropdown = document.querySelector(SORT_DROPDOWN);
+          if (!dropdown) {
+            console.warn('Sorting dropdown not found');
+            return;
+          }
+          dropdown.click();
+        
+          await new Promise(resolve => setTimeout(resolve, 500));
+        
+          const options = Array.from(document.querySelectorAll('tp-yt-paper-item:not([hidden])'));
+          const match = options.find(opt => opt.innerText.trim() === NEW_PLAYLIST_SORT);
+          if (match) {
+            match.click();
+            console.log(`Set sort order to ${NEW_PLAYLIST_SORT}`);
+          } else {
+            console.warn(`Sort option "${NEW_PLAYLIST_SORT}" not found.`);
+          }
+        }
+
+        async createNewPlaylist() {
+            click(await waitForElement(NEW_PLAYLIST_DROPDOWN));
+            await sleep(50);
+            click(await waitForElement(NEW_PLAYLIST_BUTTON));
+            await sleep(50);
+            await this.setTitle();
+            await this.setVisibility();
+            await this.setPlaylistSorting();
+            click(document.querySelector(PLAYLIST_CREATE_BUTTON));
+            await waitForElementToDisappear(PLAYLIST_CREATE_BUTTON);
+        }
+        
+        async addToPlaylist(first) {
+            const dropdown = await waitForElement(PLAYLIST_DROPDOWN_SELECTOR, this.raw);
+            click(dropdown);
+            if (first) {
+                await this.createNewPlaylist();
+            } else {
+                click(await waitForElement(FIRST_PLAYLIST_CHECKBOX));
+            }
+            click(document.querySelector(PLAYLIST_DONE_BUTTON));
+            await sleep(50);
         }
 
         async visibilityStepper() {
@@ -231,12 +333,17 @@
         debugLog(`found ${videos.length} videos`);
         debugLog('starting in 1000ms');
         await sleep(1000);
+        first = true;
         for (let video of videos) {
             const draft = await video.openDraft();
             debugLog({
                 draft
             });
             await draft.selectMadeForKids();
+            if (ADD_TO_PLAYLIST) {
+                await draft.addToPlaylist(first);
+                first = false;
+            }
             const visibility = await draft.goToVisibility();
             await visibility.setVisibility();
             const dialog = await visibility.save();
@@ -270,91 +377,9 @@
         }
         ; debugLog('completed loop through all pages');
     }
-
-    // ----------------------------------
-    // SORTING STUFF
-    // ----------------------------------
-    const SORTING_MENU_BUTTON_SELECTOR = 'button';
-    const SORTING_ITEM_MENU_SELECTOR = 'tp-yt-paper-listbox#items';
-    const SORTING_ITEM_MENU_ITEM_SELECTOR = 'ytd-menu-service-item-renderer';
-    const MOVE_TO_TOP_INDEX = 4;
-    const MOVE_TO_BOTTOM_INDEX = 5;
-
-    class SortingDialog {
-        constructor(raw) {
-            this.raw = raw;
-        }
-
-        async anyMenuItem() {
-            const item =  await waitForElement(SORTING_ITEM_MENU_ITEM_SELECTOR, this.raw);
-            if (item === null) {
-                throw new Error("could not locate any menu item");
-            }
-            return item;
-        }
-
-        menuItems() {
-            return [...this.raw.querySelectorAll(SORTING_ITEM_MENU_ITEM_SELECTOR)];
-        }
-
-        async moveToTop() {
-            click(this.menuItems()[MOVE_TO_TOP_INDEX]);
-        }
-
-        async moveToBottom() {
-            click(this.menuItems()[MOVE_TO_BOTTOM_INDEX]);
-        }
-    }
-    class PlaylistVideo {
-        constructor(raw) {
-            this.raw = raw;
-        }
-        get name() {
-            return this.raw.querySelector('#video-title').textContent;
-        }
-        async dialog() {
-            return this.raw.querySelector(SORTING_MENU_BUTTON_SELECTOR);
-        }
-
-        async openDialog() {
-            click(await this.dialog());
-            const dialog = new SortingDialog(await waitForElement(SORTING_ITEM_MENU_SELECTOR));
-            await dialog.anyMenuItem();
-            return dialog;
-        }
-
-    }
-    async function playlistVideos() {
-        return [...document.querySelectorAll('ytd-playlist-video-renderer')]
-            .map((el) => new PlaylistVideo(el));
-    }
-    async function sortPlaylist() {
-        debugLog('sorting playlist');
-        const videos = await playlistVideos();
-        debugLog(`found ${videos.length} videos`);
-        videos.sort(SORTING_KEY);
-        const videoNames = videos.map((v) => v.name);
-
-        let index = 1;
-        for (let name of videoNames) {
-            debugLog({index, name});
-            const video = videos.find((v) => v.name === name);
-            const dialog = await video.openDialog();
-            await dialog.moveToBottom();
-            await sleep(1000);
-            index += 1;
-        }
-
-    }
-
-
+  
     // ----------------------------------
     // ENTRY POINT
     // ----------------------------------
-    ({
-        'publish_drafts': LOOP_PAGES ? publishAllDrafts : publishDrafts,
-        'sort_playlist': sortPlaylist,
-    })[MODE]();
-
-
+    LOOP_PAGES ? publishAllDrafts() : publishDrafts();
 })();
