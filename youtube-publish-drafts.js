@@ -3,7 +3,9 @@
     // CONFIG (you're safe to edit this)
     const DEBUG_MODE = true; // true / false, enable for more context
     const LOOP_PAGES = true; // true / false, enable to loop through all pages when publishing drafts
+    const MODIFY_MADE_FOR_KIDS = false; // true / false, only modifies setting if set to true, otherwise leaves it as default
     const MADE_FOR_KIDS = false; // true / false;
+    const MODIFY_VISIBILITY = false; // true / false, only modifies setting if set to true, otherwise levaes it as default
     const VISIBILITY = 'Unlisted'; // 'Public' / 'Private' / 'Unlisted'
     // Playlist Config
     const ADD_TO_PLAYLIST = true; // true / false, Enables/Disables the playlist feature completely
@@ -135,7 +137,7 @@
 
         async close() {
             click(await this.closeDialogButton());
-            await sleep(50);
+            await waitForElementToDisappear('h1#dialog-title');
             debugLog('closed');
         }
     }
@@ -339,16 +341,19 @@
             debugLog({
                 draft
             });
-            await draft.selectMadeForKids();
+            if (MODIFY_MADE_FOR_KIDS) {
+                await draft.selectMadeForKids();
+            }
             if (ADD_TO_PLAYLIST) {
                 await draft.addToPlaylist(first);
                 first = false;
             }
             const visibility = await draft.goToVisibility();
-            await visibility.setVisibility();
+            if (MODIFY_VISIBILITY) {
+                await visibility.setVisibility();
+            }
             const dialog = await visibility.save();
             await dialog.close();
-            await sleep(200);
         }
     }
 
