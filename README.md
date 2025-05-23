@@ -1,9 +1,7 @@
 # youtube-publish-drafts
 
 ## Support Continued Development of This Project
-```
 [PayPal](paypal.me/JoelKalich)
-```
 ## Support the Original Creator
 ```
 BTC: bc1qksrtrwkhq043h56rsh9d4zdnmk0d43tm4m6xux
