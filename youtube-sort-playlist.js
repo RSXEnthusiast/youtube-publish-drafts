@@ -2,6 +2,7 @@
     // -----------------------------------------------------------------
     // CONFIG (you're safe to edit this)
     // -----------------------------------------------------------------
+    const DEBUG_MODE = true;
     const SORTING_KEY = (other, one) => {
         return one.name.localeCompare(other.name, undefined, {numeric: true, sensitivity: 'base'});
     };
