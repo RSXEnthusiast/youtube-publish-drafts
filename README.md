@@ -11,7 +11,7 @@ BTC: bc1qksrtrwkhq043h56rsh9d4zdnmk0d43tm4m6xux
 Publish all your draft videos and sort your playlists alphabetically without clicking
 ![quick demo](youtube-publisher-demo.gif)
 
-## how it would be used
+## How One Might Use This
 If you were to do that (which I'm pretty sure is against YouTube's terms of use, so don't do that) you'd:
 1. Edit the script file to meet your needs
 1. Go to YouTube Studio's "Content"  page
