@@ -2,6 +2,7 @@
     // -----------------------------------------------------------------
     // CONFIG (you're safe to edit this)
     // -----------------------------------------------------------------
+    const START_AT = 0;
     const DEBUG_MODE = true;
     const SORTING_KEY = (other, one) => {
         return one.name.localeCompare(other.name, undefined, {numeric: true, sensitivity: 'base'});
@@ -133,8 +134,8 @@
         videos.sort(SORTING_KEY);
         const videoNames = videos.map((v) => v.name);
 
-        let index = 1;
-        for (let name of videoNames) {
+        let index = 1 + START_AT;
+        for (let name of videoNames.slice(START_AT)) {
             debugLog({index, name});
             const video = videos.find((v) => v.name === name);
             const dialog = await video.openDialog();
