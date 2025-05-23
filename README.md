@@ -1,5 +1,3 @@
-# youtube-publish-drafts
-
 ## Support Continued Development of This Project
 [PayPal](paypal.me/JoelKalich)
 ## Support the Original Creator
