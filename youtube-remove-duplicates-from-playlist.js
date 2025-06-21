@@ -1,6 +1,6 @@
 // Credit: https://stackoverflow.com/a/69869011
 
-// This only removes duplicates if they're next to each other in the playlist, so make sure to sort the playlist by date published or something so duplicates are next to each other.
+// This only removes duplicates if they're next to each other in the playlist, so make sure to sort the playlist by date-published (or use the youtube-sort-playlist script) first so duplicates are next to each other.
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
