@@ -2,7 +2,7 @@
     // -----------------------------------------------------------------
     // CONFIG (you're safe to edit this)
     // -----------------------------------------------------------------
-    const START_AT = 0;
+    const START_AT = 1; // Yeah, index starts at 1, oof.
     const DEBUG_MODE = true;
     const SORTING_KEY = (other, one) => {
         return one.name.localeCompare(other.name, undefined, {numeric: true, sensitivity: 'base'});
@@ -123,10 +123,12 @@
         }
 
     }
+    
     async function playlistVideos() {
         return [...document.querySelectorAll('ytd-playlist-video-renderer')]
             .map((el) => new PlaylistVideo(el));
     }
+    
     async function sortPlaylist() {
         debugLog('sorting playlist');
         const videos = await playlistVideos();
@@ -134,16 +136,26 @@
         videos.sort(SORTING_KEY);
         const videoNames = videos.map((v) => v.name);
 
-        let index = 1 + START_AT;
+        let index = START_AT;
         for (let name of videoNames.slice(START_AT)) {
             debugLog({index, name});
             const video = videos.find((v) => v.name === name);
             const dialog = await video.openDialog();
             await dialog.moveToBottom();
             await sleep(1000);
+            
+            let loaded = false;
+            debugLog(`Waiting for playlist to reload...`);
+            while (!loaded) {
+                await sleep(100);
+                let updatedVideos = await playlistVideos();
+                if (updatedVideos.length >= videos.length) {
+                    debugLog('Playlist loaded.');
+                    loaded = true;
+                }
+            }
             index += 1;
         }
-
     }
 
 
