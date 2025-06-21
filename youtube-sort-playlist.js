@@ -1,4 +1,6 @@
 (() => {
+    // NOTE: IF YOUR PLAYLIST IS OVER 100 VIDEOS IN LENGTH YOU NEED TO SCROLL TO THE BOTTOM BEFORE RUNNING THE SCRIPT TO LOAD ALL OF THE VIDEOS.
+    // NOTE: ADDITIONALLY, YOU MUST LEAVE THE PAGE AT THAT LOCATION TO ENSURE THAT ALL VIDEOS RE-LOAD AFTER A VIDEO IS MOVED; DO NOT SCROLL UP.
     // -----------------------------------------------------------------
     // CONFIG (you're safe to edit this)
     // -----------------------------------------------------------------
