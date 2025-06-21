@@ -10,7 +10,7 @@
     // Playlist Config
     const ADD_TO_PLAYLIST = true; // true / false, Enables/Disables the playlist feature completely
     const CREATE_NEW_PLAYLIST = true; // true / false. If add to playlist is also true, it will create a new playlist and add all the videos to it. If this is false and add to playlist is true, videos will be added to the most recent playlist
-    const PLAYLIST_NAME = 'New Playlist'; // Name of Playlist to be created and all videos will be added. Adding videos to existing playlist is not supported. 
+    const NEW_PLAYLIST_NAME = 'New Playlist'; // Name of Playlist to be created and all videos will be added. This has no effect if create new playlist is false. 
     const NEW_PLAYLIST_VISIBILITY = 'Unlisted'; // 'Public' / 'Private' / 'Unlisted'
     const NEW_PLAYLIST_SORT = 'Manually sorted in YouTube'; // 'Date published (newest)' / 'Date published (oldest)' / 'Most popular' / 'Date added (newest)' / 'Date added (oldest)' / 'Manually sorted in YouTube'
     // END OF CONFIG (not safe to edit stuff below)
@@ -216,9 +216,9 @@
             if (titleBoxes.length > 1) {
                 const titleBox = titleBoxes[1];  // second element (0-based index)
                 titleBox.focus();
-                titleBox.innerText = PLAYLIST_NAME;
+                titleBox.innerText = NEW_PLAYLIST_NAME;
                 titleBox.dispatchEvent(new InputEvent('input', { bubbles: true }));
-                console.log(`Set playlist title to "${PLAYLIST_NAME}"`);
+                console.log(`Set playlist title to "${NEW_PLAYLIST_NAME}"`);
             } else {
                 console.warn('Not enough title boxes found.');
             }
