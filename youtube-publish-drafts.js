@@ -9,6 +9,7 @@
     const VISIBILITY = 'Unlisted'; // 'Public' / 'Private' / 'Unlisted'
     // Playlist Config
     const ADD_TO_PLAYLIST = true; // true / false, Enables/Disables the playlist feature completely
+    const CREATE_NEW_PLAYLIST = true; // true / false. If add to playlist is also true, it will create a new playlist and add all the videos to it. If this is false and add to playlist is true, videos will be added to the most recent playlist
     const PLAYLIST_NAME = 'New Playlist'; // Name of Playlist to be created and all videos will be added. Adding videos to existing playlist is not supported. 
     const NEW_PLAYLIST_VISIBILITY = 'Unlisted'; // 'Public' / 'Private' / 'Unlisted'
     const NEW_PLAYLIST_SORT = 'Manually sorted in YouTube'; // 'Date published (newest)' / 'Date published (oldest)' / 'Most popular' / 'Date added (newest)' / 'Date added (oldest)' / 'Manually sorted in YouTube'
@@ -279,7 +280,7 @@
         async addToPlaylist(first) {
             const dropdown = await waitForElement(PLAYLIST_DROPDOWN_SELECTOR, this.raw);
             click(dropdown);
-            if (first) {
+            if (first && CREATE_NEW_PLAYLIST) {
                 await this.createNewPlaylist();
             } else {
                 click(await waitForElement(FIRST_PLAYLIST_CHECKBOX));
@@ -334,12 +335,11 @@
         return editable;
     }
 
-    async function publishDrafts() {
+    async function publishDrafts(first) {
         const videos = await editableVideos();
         debugLog(`found ${videos.length} videos`);
         debugLog('starting in 1000ms');
         await sleep(1000);
-        first = true;
         for (let video of videos) {
             const draft = await video.openDraft();
             debugLog({
@@ -388,12 +388,14 @@
         ; debugLog('looping all pages...');
         await publishDrafts();
         let nextPageSelector = await getNextPageSelector();
+        first = true;
         while (!nextPageSelector.disabled) {
             ; debugLog('navigating to next page...');
             let pageDescription = await getPageDescription();
             click(nextPageSelector);
             if (await waitForNextPage(pageDescription)) {
                 await publishDrafts();
+                first = false;
                 nextPageSelector = await getNextPageSelector();
             }
             else { return debugLog('could not continue on next page'); }
